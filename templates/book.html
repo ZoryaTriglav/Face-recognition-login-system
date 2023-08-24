@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>图书管理系统</title>
+
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        input[type=text], textarea {
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        input[type=submit] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>图书管理系统</h1>
+
+    <h2>部分现有图书</h2>
+    <table>
+        <tr>
+            <th>书名</th>
+            <th>简介</th>
+        </tr>
+        {% for book in books %}
+        <tr>
+            <td>{{ book.title }}</td>
+            <td>{{ book.description }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>图书搜索</h2>
+    <form id="searchForm" action="" method="post">
+        <input type="text" placeholder="请输入书名进行搜索" name="bookName" required>
+        <input type="submit" value="搜索">
+    </form>
+    <div id="searchResults"></div>
+    <script>
+        // 获取表单元素和事件监听
+        var searchForm = document.getElementById("searchForm");
+        var searchResults = document.getElementById("searchResults");
+        var searchForm = document.getElementById("searchForm");
+        searchForm.addEventListener("submit", function(event) {
+            event.preventDefault(); // 阻止表单默认提交行为
+    
+            // 获取表单数据
+            var bookName = document.querySelector('input[name="bookName"]').value;
+    
+            // 创建 XMLHttpRequest 对象
+            var xhr = new XMLHttpRequest();
+    
+            // 设置 POST 请求参数
+            var url = "/find_book"; 
+            xhr.open("POST", url, true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+    
+            // 构建请求体数据
+            var data = JSON.stringify({
+                "bookName": bookName
+            });
+            // 发送 POST 请求
+            xhr.send(data);
+            // 处理服务器响应
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        // 请求成功，执行其他操作
+                        console.log(xhr.responseText);
+                        var response = JSON.parse(xhr.responseText);
+                        displaySearchResults(response);
+                    } else {
+                        // 请求失败，处理错误
+                        console.error("请求失败：" + xhr.status);
+                    }
+                }
+            };
+    
+            
+        });
+        function displaySearchResults(results) {
+        searchResults.innerHTML = ""; // 清空之前的结果
+
+        if (results.length === 0) {
+            searchResults.textContent = "未找到匹配的书籍。";
+            return;
+        }
+
+        var table = document.createElement("table");
+        table.innerHTML =
+            `<tr>
+                <th>书名</th>
+                <th>作者</th>
+                <th>简介</th>
+            </tr>`;
+
+        for (var i = 0; i < results.length; i++) {
+            var book = results[i];
+            var row = table.insertRow();
+            row.innerHTML = `<td>${book.title}</td><td>${book.author}</td><td>${book.description}</td>`;
+        }
+
+        searchResults.appendChild(table);
+    }
+    </script>
+
+    <h2>图书添加</h2>
+    <form id="addBookForm" action="" method="post">
+        <input type="text" placeholder="书名" id="bookName" required><br>
+        <input type="text" placeholder="作者" id="author" required><br>
+        <textarea placeholder="简介" rows="4" id="description" required></textarea><br>
+        <input type="submit" value="添加">
+    </form>
+
+    <script>
+        // 获取表单元素和事件监听
+        var addBookForm = document.getElementById("addBookForm");
+        addBookForm.addEventListener("submit", function(event) {
+            event.preventDefault(); // 阻止表单默认提交行为
+
+            // 获取表单数据
+            var bookName = document.getElementById("bookName").value;
+            var author = document.getElementById("author").value;
+            var description = document.getElementById("description").value;
+
+            // 创建XMLHttpRequest对象
+            var xhr = new XMLHttpRequest();
+
+            // 设置POST请求参数
+            var url = "/submit_book"; // 替换成实际的服务器URL
+            xhr.open("POST", url, true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+
+            // 构建请求体数据
+            var data = JSON.stringify({
+                "bookName": bookName,
+                "author": author,
+                "description": description
+            });
+            // 发送POST请求
+            xhr.send(data);
+            // 处理服务器响应
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        // 请求成功，执行其他操作
+                        // 清除输入框内容
+                    console.log(xhr.responseText);
+                    if (xhr.responseText=="1"){
+                        alert("已经存在相同书籍")
+                    }else{
+                        alert("成功添加");
+                    }
+                        
+                    
+                    document.getElementById("bookName").value = "";
+                    document.getElementById("author").value = "";
+                    document.getElementById("description").value = "";
+                    location.reload();    
+                    } else {
+                        // 请求失败，处理错误
+                        alert("请求失败：" + xhr.status);
+                        console.error("请求失败：" + xhr.status);
+                    }
+                }
+            };
+
+            
+        });
+    </script>
+    <h2>评论列表</h2>
+    <form method="POST" action="/add_comment">
+    {{ form.hidden_tag() }}
+    <div>
+        {{ form.name.label }}
+        {{ form.name() }}
+    </div>
+    <div>
+        {{ form.content.label }}
+        {{ form.content() }}
+    </div>
+    <div>
+        {{ form.submit() }}
+    </div>
+    </form>
+
+    <h2>已有评论：</h2>
+    <ul>
+        {% for comment in comments %}
+            <li>{{ comment.name }}：{{ comment.content }}</li>
+        {% endfor %}
+    </ul>
+</body>
+
+</html>
+
